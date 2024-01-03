@@ -87,7 +87,6 @@ int checkDiagonals(char gameBoard[][3]) {
 }
 
 // renamed because it seemed like this function gets the next move
-// not 100% though
 int getNextMove(char gameBoard[][3], int depth) {
     int n, m;
     if (depth % 2  == 0) {
