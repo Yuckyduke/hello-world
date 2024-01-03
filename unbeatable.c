@@ -44,9 +44,12 @@ int move(char gameBoard[][3], int depth){
     scanf(" %d", &n);
     printf("\nColumn: ");
     scanf(" %d", &m);
-
+    if (gameBoard[n][m] == '#'){
         gameBoard[n][m] = 'X';
-        return 0;
+        return 0;}
+    printf("Must move into an empty space \n");
+    move(gameBoard, depth);
+    return 0;
     }
     n = bestMove(gameBoard, depth);
     printf("%d \n", n);
