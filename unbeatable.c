@@ -1,24 +1,44 @@
 #include <stdio.h>
 #include <stdbool.h>
 int minimax(char gameBoard[][3], int depth);
+int checkDiagonals(char gameBoard[][3]);
 bool moveLeft(char gameBoard[][3]);
-int move(char gameBoard[][3], int mover);
+int playGame(void);
+int getNextMove(char gameBoard[][3], int depth);
 int checkBoard(char gameBoard[][3]);
 int playGame(void);
 int bestMove(char gameBoard[][3], int depth);
 int printBoard(char gameBoard[][3], int m);
+
+// This enum ended up being kind of pointless, but I kept it encase want to
+// use it to encode the board
+enum BoardValue { none = 0, x = 1, o = -1 };
+enum BoardValue getValue(char character);
+// maybe gameBoard could be struct that takes in Coordinate?
+struct Coordinate {
+    int x, y;
+};
+
+// The two diagonals on the board we need to check
+struct Coordinate firstDiagonal[3] = {{0,0}, {1,1}, {2,2}};
+struct Coordinate secondDiagonal[3] = {{0,2}, {1,1}, {2,0}};
 
 int main(void){
     playGame();
     return 0;
 }
 
-int playGame(void){
+// Just changed some formatting here so easier to visualize board
+int playGame(void) {
     int i = 0;
-    char gameBoard[][3] = {{'#', '#', '#'}, {'#', '#', '#'}, {'#', '#', '#'}};
+    char gameBoard[][3] = {
+        {'#', '#', '#'},
+        {'#', '#', '#'},
+        {'#', '#', '#'}
+    };
     printBoard(gameBoard, 3);
-    while (checkBoard(gameBoard) == 0 && moveLeft(gameBoard) == true && i < 9){
-        move(gameBoard, i);
+    while (checkBoard(gameBoard) == 0 && moveLeft(gameBoard) == true && i < 9) {
+        getNextMove(gameBoard, i);
         printBoard(gameBoard, 3);
         printf("i: %d \n", i);
         i++;
@@ -32,32 +52,62 @@ int printBoard(char gameBoard[][3],int m){
             printf("%c ", gameBoard[i][j]);
         }
         printf("\n");
-   }
-   printf("\n\n");
-   return 0;
+    }
+    printf("\n\n");
+    return 0;
 }
 
-int move(char gameBoard[][3], int depth){
-    int n, m;
-    if (depth % 2  == 0){
-    printf("Row: ");
-    scanf(" %d", &n);
-    printf("\nColumn: ");
-    scanf(" %d", &m);
-    if (gameBoard[n][m] == '#'){
-        gameBoard[n][m] = 'X';
-        return 0;}
-    printf("Must move into an empty space \n");
-    move(gameBoard, depth);
-    return 0;
+
+// initialize BoardValue given a character
+enum BoardValue getValue(char character) {
+    if (character == 'X') {
+        return x;
+    } else if (character == 'O') {
+        return o;
     }
-    n = bestMove(gameBoard, depth);
-    printf("%d \n", n);
-    gameBoard[n/10][n%10] = 'O'; 
+    return none;
+}
+
+
+// sum the diagonals, if all x's or all o's return 10/-10 (respectively)
+int checkDiagonals(char gameBoard[][3]) {
+    int firstDiagValue = 0;
+    int secondDiagValue = 0;
+    for (int i = 0; i < 3; i++) {
+        firstDiagValue += getValue(gameBoard[firstDiagonal[i].x][firstDiagonal[i].y]);
+        secondDiagValue += getValue(gameBoard[secondDiagonal[i].x][secondDiagonal[i].y]);
+    }
+    if (firstDiagValue == 3 || secondDiagValue == 3) {
+        return 10;
+    }
+    if (firstDiagValue == -3 || secondDiagValue == -3) {
+        return -10;
+    }
     return 0;
 }
-int bestMove(char gameBoard[][3], int depth){
-    int r, c;
+
+// renamed because it seemed like this function gets the next move
+// not 100% though
+int getNextMove(char gameBoard[][3], int depth) {
+    int n, m;
+    if (depth % 2  == 0) {
+        printf("Row: ");
+        scanf(" %d", &n);
+        printf("\nColumn: ");
+        scanf(" %d", &m);
+        
+        gameBoard[n][m] = 'X';
+        return 0;
+    } else {
+        n = bestMove(gameBoard, depth);
+        printf("%d \n", n);
+        gameBoard[n/10][n%10] = 'O';
+        return 0;
+    }
+}
+
+int bestMove(char gameBoard[][3], int depth) {
+    int row = 0, column = 0;
     int bestVal = 1000;
     for (int i = 0; i < 3; i++){
         for (int j = 0; j < 3; j++){
@@ -67,57 +117,45 @@ int bestMove(char gameBoard[][3], int depth){
                 gameBoard[i][j] = '#';
                 if (moveVal < bestVal){
                     bestVal = moveVal;
-                    r = i;
-                    c = j;
+                    row = i;
+                    column = j;
                 }
             }
-                
         }
     }
-        return r*10 + c;
+    return row*10 + column;
 }
 
-int checkBoard(char gameBoard[][3]){
-    if (gameBoard[0][0] == 'O' && gameBoard[0][1] == 'O' && gameBoard[0][2] == 'O'){
-        return -10;}
-    if (gameBoard[0][0] == 'X' && gameBoard[0][1] == 'X' && gameBoard[0][2] == 'X'){
-        return 10;}        
-    if (gameBoard[1][0] == 'O' && gameBoard[1][1] == 'O' && gameBoard[1][2] == 'O'){
-        return -10;}
-    if (gameBoard[1][0] == 'X' && gameBoard[1][1] == 'X' && gameBoard[1][2] == 'X'){
-        return 10;}
-    if (gameBoard[2][0] == 'O' && gameBoard[2][1] == 'O' && gameBoard[2][2] == 'O'){
-        return -10;}
-    if (gameBoard[2][0] == 'X' && gameBoard[2][1] == 'X' && gameBoard[2][2] == 'X'){
-        return 10;}
-    if (gameBoard[0][0] == 'O' && gameBoard[1][0] == 'O' && gameBoard[2][0] == 'O'){
-        return -10;}
-    if (gameBoard[0][0] == 'X' && gameBoard[1][0] == 'X' && gameBoard[2][0] == 'X'){
-        return 10;}
-    if (gameBoard[0][1] == 'O' && gameBoard[1][1] == 'O' && gameBoard[2][1] == 'O'){
-        return -10;}
-    if (gameBoard[0][1] == 'X' && gameBoard[1][1] == 'X' && gameBoard[2][1] == 'X'){
-        return 10;}
-    if (gameBoard[0][2] == 'O' && gameBoard[1][2] == 'O' && gameBoard[2][2] == 'O'){
-        return -10;}
-    if(gameBoard[0][2] == 'X' && gameBoard[1][2] == 'X' && gameBoard[2][2] == 'X'){
-        return 10;}
-    if (gameBoard[0][0] == 'O' && gameBoard[1][1] == 'O' && gameBoard[2][2] == 'O'){ 
-        return -10;}
-    if (gameBoard[0][0] == 'X' && gameBoard[1][1] == 'X' && gameBoard[2][2] == 'X'){
-        return 10;}
-    if (gameBoard[2][0] == 'O' && gameBoard[1][1] == 'O' && gameBoard[0][2] == 'O') {
-        return -10;}
-    if (gameBoard[2][0] == 'X' && gameBoard[1][1] == 'X' && gameBoard[0][2] == 'X'){
-        return 10;}
-    return 0;
+// Instead of the if statements (we still have some obvi) I tried to make
+// a way to look through the whole board and return your -10/0/10 value
+int checkBoard(char gameBoard[][3]) {
+    for (int i = 0; i < 3; i++) {
+        int horizontalScore = 0;
+        int verticalScore = 0;
+        for (int j = 0; j < 3; j++) {
+            horizontalScore += getValue(gameBoard[i][j]);
+            verticalScore += getValue(gameBoard[j][i]);
+        }
+        if (verticalScore == -3 || horizontalScore == -3) {
+            return -10;
+        }
+        if (verticalScore == 3 || horizontalScore == 3) {
+            return 10;
+        }
     }
-bool moveLeft(char gameBoard[][3]){
-    for (int i = 0; i < 3; i++){
-        for (int j = 0; j<3; j++){
-            if (gameBoard[i][j] == '#'){
-                return true;}}}
-    return false;}
+    return checkDiagonals(gameBoard);
+}
+
+bool moveLeft(char gameBoard[][3]) {
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j<3; j++) {
+            if (gameBoard[i][j] == '#') {
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 int minimax(char gameBoard[][3], int depth){
     int score = checkBoard(gameBoard);
@@ -142,7 +180,7 @@ int minimax(char gameBoard[][3], int depth){
                     }
                 }
             }
-        return best;
+            return best;
         }
         else {
             //minimizer
@@ -158,10 +196,10 @@ int minimax(char gameBoard[][3], int depth){
                     }
                 }
             }
-        return best;
+            return best;
         }
-    }
-    else{
+    } else {
         return 0;
     }
 }
+
